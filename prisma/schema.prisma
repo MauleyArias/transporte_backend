@@ -1,0 +1,215 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model Persona {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  numeroDocumento         String                    @map("numero_documento")          @db.VarChar @unique
+  tipoDocumento           TypeDocument              @map("tipo_documento")
+  nombre                  String                                                      @db.VarChar
+  apellido                String                                                      @db.VarChar
+  correo                  String?                                                     @db.VarChar @unique
+  activo                  Boolean                                                     @default(true)
+  codigoActivacion        String?                   @map("codigo_activacion")         @db.VarChar
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  cliente                 Cliente?
+  usuario                 Usuario?
+  sesiones                Sesion[]
+  recuperarContrasenias   RecuperarContrasenia[]
+  auditorias              Auditoria[]
+  @@map("personas")  
+}
+model Usuario {
+  personaId               String                    @map("persona_id")                @id @unique @db.Uuid
+  rolId                   String                    @map("rol_id")                    @db.Uuid
+  password                String                                                      @db.VarChar
+  activo                  Boolean                                                     @default(true)
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  persona                 Persona                                                     @relation(fields: [personaId], references: [id])
+  rol                     Rol                                                         @relation(fields: [rolId], references: [id])
+  sucursales              Sucursal[]
+  ownedBuses              Bus[]                                                       @relation(name: "BusOwner")
+  drivenBuses             Bus[]                                                       @relation(name: "BusDriver")
+  @@map("usuarios")
+}
+model Cliente {
+  personaId               String                    @map("persona_id")                @id @unique @db.Uuid
+  activo                  Boolean                                                     @default(true)
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  persona                 Persona                                                     @relation(fields: [personaId], references: [id])
+  tickets                 Ticket[]
+  @@map("clientes")
+}
+model Rol {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre                  String                                                      @db.VarChar
+  activo                  Boolean                                                     @default(true)
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  permisos                Permiso[]
+  usuarios                Usuario[]
+  @@map("roles")
+}
+model Permiso {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre                  String                                                      @db.VarChar
+  descripcion             String?                                                     @db.VarChar
+  activo                  Boolean                                                     @default(true)
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  roles                   Rol[]
+  @@map("permisos")
+}
+model Ruta {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  origen                  String
+  destino                 String
+  distanciaKm             Int                       @map("distancia_km")
+  tiempoEstimadoMinutos   Int                       @map("tiempo_estimado_minutos")
+  activo                  Boolean                                                     @default(true)
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  viajes                  Viaje[]
+  @@map("rutas")
+}
+model Bus {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  duenioId                String                    @map("duenio_id")                 @db.Uuid
+  conductorId             String                    @map("conductor_id")              @db.Uuid
+  numeroPlaca             String                    @map("numero_placa")              @unique
+  capacidad               Int
+  model                   String
+  estado                  TypeStateBus
+  viajes                  Viaje[]
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  ownerUsuario              Usuario                                                     @relation(name: "BusOwner", fields: [duenioId], references: [personaId])
+  driverUsuario             Usuario                                                     @relation(name: "BusDriver", fields: [conductorId], references: [personaId])
+  @@map("buses")
+}
+model Viaje {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rutaId                  String                    @map("ruta_id")                   @db.Uuid
+  busId                   String                    @map("bus_id")                    @db.Uuid
+  fechaPartida            DateTime                  @map("fecha_partida")
+  precio                  Float                                                       @default(0.0)
+  estado                  TripStatus                                                  @default(PROGRAMADO)
+  asientosVendidos        Int                       @map("asientos_vendidos")         @default(0)
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  ruta                    Ruta                                                        @relation(fields: [rutaId], references: [id])
+  bus                     Bus                                                         @relation(fields: [busId], references: [id])
+  tickets                 Ticket[]
+  @@map("viajes")
+}
+model Ticket {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clienteId               String                    @map("cliente_id")                @db.Uuid
+  viajeId                 String                    @map("viaje_id")                  @db.Uuid
+  sucursalId              String                    @map("sucursal_id")               @db.Uuid 
+  nombrePasajero          String                    @map("nombre_pasajero")           @db.VarChar
+  numeroAsiento           Int                       @map("numero_asiento")
+  estado                  TicketStatus                                                @default(COMPRADO)
+  precio                  Float
+  fechaCompra             DateTime                  @map("fecha_compra")              @default(now())
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  viaje                   Viaje                                                       @relation(fields: [viajeId], references: [id])
+  cliente                Cliente                                                     @relation(fields: [clienteId], references: [personaId])
+  sucursal                Sucursal                                                    @relation(fields: [sucursalId], references: [id])
+  payments                Pago[]
+  @@map("tickets")
+}
+model Pago {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId                String                    @map("ticket_id")                 @db.Uuid
+  metodoPago              String                    @map("metodo_pago")               @db.VarChar
+  monto                   Float                                                       @default(0)
+  fechaPago               DateTime                                                    @default(now())
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  ticket                  Ticket                                                      @relation(fields: [ticketId], references: [id])
+  @@map("pagos")
+}
+model RecuperarContrasenia {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  personaId               String                    @map("persona_id")                @db.Uuid
+  codigo                  String                                                      @db.VarChar
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  persona                 Persona                                                     @relation(fields: [personaId], references: [id])
+  @@map("recuperar_contrasenias")
+}
+model Sesion {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  personaId               String                    @map("persona_id")                @db.Uuid
+  token                   String                                                      @db.VarChar @unique
+  direccionIp             String                    @map("direccion_ip")              @db.VarChar
+  agenteUsuario           String                    @map("agente_usuario")            @db.VarChar
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  persona                 Persona                                                     @relation(fields: [personaId], references: [id])
+  @@map("sesiones")
+}
+
+model Sucursal {
+  id                      String                                                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre                  String                                                      @db.VarChar
+  direccion               String?                                                     @db.VarChar
+  telefono                String                                                      @db.VarChar
+  activo                  Boolean                                                     @default(true)
+  createdAt               DateTime                  @map("created_at")                @default(now())
+  updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
+  usuarios                Usuario[]
+  tickets                 Ticket[]
+  @@map("sucursales")
+}
+model Auditoria {
+  id                      String                                                      @id @default(uuid())
+  personaId               String                    @map("persona_id")                @db.Uuid
+  acion                   String                                                      // 'CREATE', 'UPDATE', 'DELETE'
+  entidad                 String                                                      // Nombre de la tabla: 'Price', 'Product', etc.
+  entidadId               String                    @map("entidad_id")                // ID del registro afectado
+  datoAnterior            Json?                     @map("dato_anterior")             // Estado anterior (si aplica)
+  datoPosterior           Json?                     @map("dato_posterior")            // Estado nuevo (si aplica)
+  timestamp               DateTime                                                    @default(now())
+  descripcion             String?                                                     // Mensaje opcional ("Cambio de precio por inflación")
+  persona                 Persona                                                     @relation(fields: [personaId], references: [id])
+  @@map("aditorias")
+}
+
+// emuns section
+enum TypeDocument {
+  DNI
+  RUC
+  PASAPORTE
+}
+enum TypeStateBus {
+  ACTIVO
+  MANTENIMIENTO
+}
+enum TripStatus {
+  PROGRAMADO
+  EN_PROGRESO
+  FINALIZADO
+  CANCELADO
+}
+enum TicketStatus {
+  COMPRADO
+  USADO
+  CANCELADO
+  RESERVADO
+}
