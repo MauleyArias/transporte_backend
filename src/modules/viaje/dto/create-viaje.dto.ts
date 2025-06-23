@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { TripStatus } from "@prisma/client";
+import { Type } from "class-transformer";
 import { IsDate, IsEnum, IsNumber, IsUUID } from "class-validator";
 
 export class CreateViajeDto {
@@ -20,6 +21,7 @@ export class CreateViajeDto {
   busId: string;
 
   @IsDate()
+  @Type(() => Date) 
   @ApiProperty({
     example: '2023-10-01T12:00:00Z',
     description: 'Fecha y hora de partida del viaje',

@@ -3,6 +3,7 @@ import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PaginationDto } from '@/common';
+import { BusEntity } from './entities/bus.entity';
 
 @Injectable()
 export class BusService {
@@ -31,6 +32,7 @@ export class BusService {
           skip: (page - 1) * limit,
           take: limit,
           // where: { activo: true },
+          select: BusEntity,
         }),
         meta: { total: totalPages, page, lastPage },
       };

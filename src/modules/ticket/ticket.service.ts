@@ -3,6 +3,7 @@ import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PaginationDto } from '@/common';
+import { TicketEntity } from './entities/ticket.entity';
 
 @Injectable()
 export class TicketService {
@@ -31,6 +32,7 @@ export class TicketService {
           skip: (page - 1) * limit,
           take: limit,
           // where: { activo: true },
+          select: TicketEntity
         }),
         meta: { total: totalPages, page, lastPage },
       };

@@ -3,6 +3,7 @@ import { CreateRutaDto } from './dto/create-ruta.dto';
 import { UpdateRutaDto } from './dto/update-ruta.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PaginationDto } from '@/common';
+import { RutaEntity } from './entities/ruta.entity';
 
 @Injectable()
 export class RutaService {
@@ -31,6 +32,7 @@ export class RutaService {
           skip: (page - 1) * limit,
           take: limit,
           where: { activo: true },
+          select: RutaEntity
         }),
         meta: { total: totalPages, page, lastPage },
       };

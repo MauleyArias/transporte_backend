@@ -96,8 +96,8 @@ model Bus {
   viajes                  Viaje[]
   createdAt               DateTime                  @map("created_at")                @default(now())
   updatedAt               DateTime                  @map("updated_at")                @default(now()) @updatedAt
-  ownerUsuario              Usuario                                                     @relation(name: "BusOwner", fields: [duenioId], references: [personaId])
-  driverUsuario             Usuario                                                     @relation(name: "BusDriver", fields: [conductorId], references: [personaId])
+  ownerUsuario            Usuario                                                     @relation(name: "BusOwner", fields: [duenioId], references: [personaId])
+  driverUsuario           Usuario                                                     @relation(name: "BusDriver", fields: [conductorId], references: [personaId])
   @@map("buses")
 }
 model Viaje {

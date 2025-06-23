@@ -3,6 +3,7 @@ import { CreateViajeDto } from './dto/create-viaje.dto';
 import { UpdateViajeDto } from './dto/update-viaje.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PaginationDto } from '@/common';
+import { ViajeEntity } from './entities/viaje.entity';
 
 @Injectable()
 export class ViajeService {
@@ -31,6 +32,7 @@ export class ViajeService {
         skip: (page - 1) * limit,
         take: limit,
         // where: { activo: true },
+        select: ViajeEntity,
       }),
       meta: { total: totalPages, page, lastPage },
     };
@@ -39,6 +41,7 @@ export class ViajeService {
   async findOne(id: string) {
     const viaje = await this.prisma.viaje.findUnique({
       where: { id },
+      select: ViajeEntity,
     });
 
     if (!viaje) {

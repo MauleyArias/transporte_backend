@@ -5,7 +5,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { PaginationDto } from '@/common';
 import { UsuarioEntity } from './entities/usuario.entity';
- @Injectable()
+@Injectable()
 export class UsuarioService {
 
   constructor(
@@ -13,7 +13,7 @@ export class UsuarioService {
   ) { }
 
   async create(createUsuarioDto: CreateUsuarioDto) {
-    const { numeroDocumento, tipoDocumento, rolId, nombre, apellido, correo } =
+    const { numeroDocumento, tipoDocumento, rolId, sucursalesIds, nombre, apellido, correo } =
       createUsuarioDto;
 
     const personaExiste = await this.prisma.persona.findUnique({
@@ -38,6 +38,9 @@ export class UsuarioService {
           create: {
             password: hashedPassword,
             rolId: rolId,
+            sucursales: {
+              connect: sucursalesIds.map(id => ({ id })),
+            }
           },
         },
       },
@@ -91,7 +94,7 @@ export class UsuarioService {
 
   async update(id: string, updateUsuarioDto: UpdateUsuarioDto) {
     await this.findOne(id);
-    const { numeroDocumento, tipoDocumento, rolId, nombre, apellido, correo } = updateUsuarioDto;
+    const { numeroDocumento, tipoDocumento, rolId, sucursalesIds, nombre, apellido, correo } = updateUsuarioDto;
 
     return this.prisma.persona.update({
       where: {
@@ -110,7 +113,10 @@ export class UsuarioService {
           update: {
             where: { personaId: id },
             data: {
-              rolId
+              rolId,
+              sucursales: {
+                set: sucursalesIds?.map(id => ({ id })) ?? [],
+              },
             },
           },
         },
